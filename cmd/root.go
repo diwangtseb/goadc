@@ -7,6 +7,7 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"go/ast"
 	"go/format"
 	"go/parser"
 	"go/token"
@@ -52,11 +53,16 @@ func astParse() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(file)
 	for _, node := range file.Decls {
 		v := &helper.Visitor{}
-		vs := v.Visit(node)
-		fmt.Println(vs)
+		if f, ok := node.(*ast.GenDecl); ok {
+			v.Visit(f)
+			for _, s := range f.Specs {
+				if t, ok := s.(*ast.TypeSpec); ok {
+					v.Visit(t.Type)
+				}
+			}
+		}
 	}
 
 	var output []byte
